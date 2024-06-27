@@ -9,28 +9,42 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get('/blog-posts')
-  async getBlogPosts(): Promise<BlogPosts[]> {
-    const blogPosts = await e
-      .select(e.BlogPosts, () => ({
-        ...e.BlogPosts['*'],
-      }))
-      .run(client);
+  async getBlogPosts(): Promise<BlogPosts[] | { error: boolean }> {
+    try {
+      const blogPosts = await e
+        .select(e.BlogPosts, () => ({
+          ...e.BlogPosts['*'],
+        }))
+        .run(client);
 
-    return blogPosts;
+      return blogPosts;
+      
+    } catch (error) {
+      console.error(error);
+      return { error: true };
+    }
   }
 
   @Post('/blog-post')
-  async createBlogPosts(@Body() createBlogPostDto: BlogPosts): Promise<{}> {
-    const { id } = await e
-      .insert(e.BlogPosts, {
-        content: createBlogPostDto.content,
-        title: createBlogPostDto.title,
-        userName: createBlogPostDto.userName,
-      })
-      .run(client);
-    if (id) {
-      return { success: true, id: id };
-    } else {
+  async createBlogPosts(
+    @Body() createBlogPostDto: BlogPosts,
+  ): Promise<{ success: boolean; id?: string }> {
+    try {
+      const result = await e
+        .insert(e.BlogPosts, {
+          content: createBlogPostDto.content,
+          title: createBlogPostDto.title,
+          userName: createBlogPostDto.userName,
+        })
+        .run(client);
+
+      if (result && result.id) {
+        return { success: true, id: result.id };
+      } else {
+        return { success: false };
+      }
+    } catch (error) {
+      console.error(error);
       return { success: false };
     }
   }
